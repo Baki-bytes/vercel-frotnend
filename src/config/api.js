@@ -3,10 +3,25 @@
  * Centralized configuration for all API endpoints and base URLs
  */
 
+const DEFAULT_BACKEND_URL = "https://vercel-backend-five-eta.vercel.app";
+
+const resolveBaseUrl = (value) => {
+  const cleanedValue = (value || "").trim();
+
+  if (!cleanedValue) return DEFAULT_BACKEND_URL;
+
+  // Prevent accidental placeholder deployments from breaking production.
+  if (cleanedValue.includes("your-backend-project.vercel.app")) {
+    return DEFAULT_BACKEND_URL;
+  }
+
+  return cleanedValue;
+};
+
 const API_CONFIG = {
   // Base URLs
-  API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001',
-  SOCKET_URL: import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001',
+  API_BASE_URL: resolveBaseUrl(import.meta.env.VITE_API_BASE_URL),
+  SOCKET_URL: resolveBaseUrl(import.meta.env.VITE_SOCKET_URL),
 
   // API Endpoints
   ENDPOINTS: {
