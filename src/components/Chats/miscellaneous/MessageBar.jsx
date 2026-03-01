@@ -5,10 +5,12 @@ function MessageBar({ onSend }) {
   const [message, setMessage] = useState("");
 
   //Send the particular message on chatWindow component 
-  const handleSendClick = () => {
+  const handleSendClick = async () => {
     if (message.trim() !== "") {
-      onSend(message);            
-      setMessage("");             
+      const ok = await onSend(message);
+      if (ok) {
+        setMessage("");
+      }
     }
   };
 

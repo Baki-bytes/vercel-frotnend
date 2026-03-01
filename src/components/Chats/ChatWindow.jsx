@@ -9,6 +9,7 @@ import API_CONFIG from "../../config/api";
 function ChatWindow() {
   const { user, selectedChat } = ChatState();
   const [messages, setMessages] = useState([]);
+  const [sendError, setSendError] = useState("");
   const selectedChatCompare = useRef(null);
   const lastFetchRef = useRef(0);
 
@@ -83,9 +84,18 @@ function ChatWindow() {
 
   /* ================= SEND MESSAGE ================= */
   const handleSend = async (text) => {
-    if (!text.trim()) return;
+    if (!text.trim()) return false;
+    if (!selectedChat?._id) {
+      setSendError("Select a chat first.");
+      return false;
+    }
+    if (!user?.token) {
+      setSendError("Session expired. Please login again.");
+      return false;
+    }
 
     try {
+      setSendError("");
       const { data } = await axios.post(
         API_CONFIG.getFullUrl(API_CONFIG.ENDPOINTS.MESSAGE.SEND),
         {
@@ -103,8 +113,14 @@ function ChatWindow() {
       socket.emit("new message", data);
       setMessages((prev) => [...prev, data]);
       lastFetchRef.current = Date.now();
+      return true;
     } catch (error) {
+      const msg =
+        error?.response?.data?.message ||
+        "Message send failed. Check backend/token.";
+      setSendError(msg);
       console.error(error);
+      return false;
     }
   };
 
@@ -118,6 +134,11 @@ function ChatWindow() {
 
   return (
     <div className="chatBox">
+      {sendError ? (
+        <div style={{ color: "#ff6b6b", fontSize: "12px", padding: "6px 10px" }}>
+          {sendError}
+        </div>
+      ) : null}
       <ChatHistory messages={messages} />
       <MessageBar onSend={handleSend} />
     </div>
