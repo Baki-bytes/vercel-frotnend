@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useCallback, useState, useEffect, useRef } from "react";
 import socket from "../../socket";
 import ChatHistory from "./miscellaneous/ChatHistory";
 import MessageBar from "./miscellaneous/MessageBar";
@@ -37,50 +37,49 @@ function ChatWindow() {
   }, [user]);
 
   /* ================= FETCH MESSAGES ================= */
+  const fetchMessages = useCallback(async () => {
+    if (!selectedChat?._id || !user?.token) return;
+    if (Date.now() - lastFetchRef.current < 1200) return;
+    lastFetchRef.current = Date.now();
+
+    try {
+      const { data } = await axios.get(
+        `${API_CONFIG.getFullUrl(
+          API_CONFIG.ENDPOINTS.MESSAGE.GET
+        )}/${selectedChat._id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+          params: {
+            _: Date.now(),
+          },
+        }
+      );
+      setMessages(data);
+    } catch (error) {
+      console.error(error);
+    }
+  }, [selectedChat?._id, user?.token]);
+
   useEffect(() => {
     if (!selectedChat?._id || !user?.token) return;
 
     selectedChatCompare.current = selectedChat;
     socket.emit("join chat", selectedChat._id);
-    let isMounted = true;
-
-    const fetchMessages = async () => {
-      if (Date.now() - lastFetchRef.current < 1500) return;
-      lastFetchRef.current = Date.now();
-
-      try {
-        const { data } = await axios.get(
-          `${API_CONFIG.getFullUrl(
-            API_CONFIG.ENDPOINTS.MESSAGE.GET
-          )}/${selectedChat._id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${user.token}`,
-            },
-          }
-        );
-
-        if (isMounted) {
-          setMessages(data);
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
     fetchMessages();
 
-    const pollId = setInterval(() => {
-      if (!document.hidden) {
-        fetchMessages();
-      }
-    }, 3000);
+    const pollId = setInterval(fetchMessages, 2000);
+    const syncOnFocus = () => fetchMessages();
+    window.addEventListener("focus", syncOnFocus);
+    document.addEventListener("visibilitychange", syncOnFocus);
 
     return () => {
-      isMounted = false;
       clearInterval(pollId);
+      window.removeEventListener("focus", syncOnFocus);
+      document.removeEventListener("visibilitychange", syncOnFocus);
     };
-  }, [selectedChat, user?.token]);
+  }, [selectedChat, user?.token, fetchMessages]);
 
   /* ================= SEND MESSAGE ================= */
   const handleSend = async (text) => {

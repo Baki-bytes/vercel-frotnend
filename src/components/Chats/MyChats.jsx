@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import ChatPreview from "./miscellaneous/ChatPreview";
 import { ChatState } from "../../context/ChatProvider";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 import API_CONFIG from "../../config/api";
 import "./Chat.css";
 
@@ -10,39 +9,48 @@ import "./Chat.css";
 function MyChats({ onChatSelect }) {
   const [loggedUser, setLoggedUser] = useState();
   const { selectedChat, setSelectedChat, user, chats, setChats } = ChatState();
-  const navigate = useNavigate();
 
   //Fetches all the chats in which the user is involved
-  const fetchChat = async (token) => {
+  const fetchChat = useCallback(async (token) => {
+    if (!token) return;
     try {
       const config = {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        params: {
+          _: Date.now(),
+        },
       };
       const { data } = await axios.get(API_CONFIG.getFullUrl(API_CONFIG.ENDPOINTS.CHAT.GET_ALL), config);
       setChats(data);
-      //console.log(data);
     } catch (err) {
       console.log(err);
     }
-  };
+  }, [setChats]);
 
   useEffect(() => {
-    const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-    if (!userInfo?.token) return;
+    const userInfo = user || JSON.parse(localStorage.getItem("userInfo"));
+    const token = userInfo?.token;
+    if (!token) return;
 
     setLoggedUser(userInfo);
-    fetchChat(userInfo.token);
+    fetchChat(token);
 
     const pollId = setInterval(() => {
-      if (!document.hidden) {
-        fetchChat(userInfo.token);
-      }
-    }, 4000);
+      fetchChat(token);
+    }, 2500);
 
-    return () => clearInterval(pollId);
-  }, []);
+    const syncOnFocus = () => fetchChat(token);
+    window.addEventListener("focus", syncOnFocus);
+    document.addEventListener("visibilitychange", syncOnFocus);
+
+    return () => {
+      clearInterval(pollId);
+      window.removeEventListener("focus", syncOnFocus);
+      document.removeEventListener("visibilitychange", syncOnFocus);
+    };
+  }, [user, fetchChat]);
 
   return (
     <div className="MsgBox">
