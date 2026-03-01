@@ -1,0 +1,44 @@
+.message-bar {
+  display: flex;
+  align-items: center;
+  background-color: #2d2d2d;
+  border: 1px solid #555;
+  border-radius:.5vw;
+  padding: clamp(0.5rem, 1vh, 1rem) clamp(0.75rem, 1.5vw, 1.5rem);
+  color: white;
+  width: clamp(90%,53vw,90%);
+  margin: clamp(1vh, 2vh, 3vh) clamp(2vw, 3vw, 5vw);
+  height: clamp(2rem, 4vh, 3rem);
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.message-bar input {
+  width: 90%;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  color: white;
+  font-size: clamp(0.8rem, 1.2vw, 1.25rem);
+  min-width: 0;
+}
+
+.icons {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.5rem, 1vw, 1rem);
+  border-left: 1px solid #444;
+  padding-left: clamp(0.5rem, 1vw, 1rem);
+  flex-shrink: 0;
+}
+
+.icon {
+  cursor: pointer;
+  font-size: clamp(.8rem, 1.5vw, 1.5rem);
+  transition: transform 0.1s ease;
+  min-width: 0;
+}
+
+.icon:hover {
+  transform: scale(1.1);
+}

@@ -1,0 +1,22 @@
+.ChatPreview{
+  width:clamp(15rem, 100%, 100%);
+  padding: 0 clamp(1rem, 2vw, 1.5rem);
+  height: clamp(3rem, 10vh, 4rem);
+  display: flex;
+  margin-bottom: clamp(0.125rem, 0.5vh, 0.5rem);
+  gap: clamp(0.5rem, 1vw, 1rem);
+  align-items: center;
+  border-radius: clamp(0.25rem, 1vw, 0.5rem);
+  min-width: 0;
+  flex-shrink: 0;
+} 
+
+.ChatPreview:hover{
+  background-color: #3c3c3c;
+  box-shadow: 2px 2px 8px rgb(60, 60, 60,.6);
+}
+
+.selected{
+  background-color: #3c3c3c;
+  box-shadow: 2px 2px 8px rgb(60, 60, 60,.6);
+}
