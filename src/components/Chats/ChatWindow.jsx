@@ -10,6 +10,7 @@ function ChatWindow() {
   const { user, selectedChat } = ChatState();
   const [messages, setMessages] = useState([]);
   const selectedChatCompare = useRef(null);
+  const lastFetchRef = useRef(0);
 
   /* ================= SOCKET SETUP ================= */
   useEffect(() => {
@@ -37,12 +38,16 @@ function ChatWindow() {
 
   /* ================= FETCH MESSAGES ================= */
   useEffect(() => {
-    if (!selectedChat?._id) return;
+    if (!selectedChat?._id || !user?.token) return;
 
     selectedChatCompare.current = selectedChat;
     socket.emit("join chat", selectedChat._id);
+    let isMounted = true;
 
     const fetchMessages = async () => {
+      if (Date.now() - lastFetchRef.current < 1500) return;
+      lastFetchRef.current = Date.now();
+
       try {
         const { data } = await axios.get(
           `${API_CONFIG.getFullUrl(
@@ -54,14 +59,28 @@ function ChatWindow() {
             },
           }
         );
-        setMessages(data);
+
+        if (isMounted) {
+          setMessages(data);
+        }
       } catch (error) {
         console.error(error);
       }
     };
 
     fetchMessages();
-  }, [selectedChat, user.token]);
+
+    const pollId = setInterval(() => {
+      if (!document.hidden) {
+        fetchMessages();
+      }
+    }, 3000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(pollId);
+    };
+  }, [selectedChat, user?.token]);
 
   /* ================= SEND MESSAGE ================= */
   const handleSend = async (text) => {
@@ -84,6 +103,7 @@ function ChatWindow() {
 
       socket.emit("new message", data);
       setMessages((prev) => [...prev, data]);
+      lastFetchRef.current = Date.now();
     } catch (error) {
       console.error(error);
     }

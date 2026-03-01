@@ -30,10 +30,18 @@ function MyChats({ onChatSelect }) {
 
   useEffect(() => {
     const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-    if (userInfo) {
-      setLoggedUser(userInfo);
-      fetchChat(userInfo.token);
-    }
+    if (!userInfo?.token) return;
+
+    setLoggedUser(userInfo);
+    fetchChat(userInfo.token);
+
+    const pollId = setInterval(() => {
+      if (!document.hidden) {
+        fetchChat(userInfo.token);
+      }
+    }, 4000);
+
+    return () => clearInterval(pollId);
   }, []);
 
   return (
